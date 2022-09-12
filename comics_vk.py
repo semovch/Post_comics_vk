@@ -38,7 +38,6 @@ def wall_save(vk_token,filename,dir_path):
                 }
         response_server = requests.post(url, files=files, params=params_server)
         response_server.raise_for_status()    
-    
     params_wall_save = {
         'photo': response_server.json()['photo'],
         'group_id': 215862413,
