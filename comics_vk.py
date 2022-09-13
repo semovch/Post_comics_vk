@@ -28,17 +28,17 @@ def wall_upload(vk_token, vk_group_id):
 
 
 def wall_save(vk_token,filename,dir_path, vk_group_id):
+    url = wall_upload(vk_token,vk_group_id)['response']['upload_url']
     with open(os.path.join(dir_path, filename), 'rb') as file:
-        url = wall_upload(vk_token)['response']['upload_url']
         server_params = {
             'group_id': vk_group_id
                 }
         files = {
             'photo': file
                 }
-        server_response = requests.post(url, files=files, params=server_params)
-        server_response.raise_for_status()
-        server_response_stat = server_response.json()
+    server_response = requests.post(url, files=files, params=server_params)
+    server_response.raise_for_status()
+    server_response_stat = server_response.json()
     wall_save_params = {
         'photo': server_response_stat['photo'],
         'group_id': vk_group_id,
