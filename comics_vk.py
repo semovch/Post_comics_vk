@@ -7,13 +7,13 @@ import random
 from dotenv import load_dotenv
 
 
-def get_comics():
+def get_random_comic_stat():
     response_current = requests.get('https://xkcd.com/info.0.json')
     num_current = response_current.json()['num']
     random_num = random.randint(1, num_current)
     url_random = f'https://xkcd.com/{random_num}/info.0.json'
     response = requests.get(url_random)
-    response.raise_for_status
+    response.raise_for_status()
     return response.json()
 
 
@@ -80,7 +80,7 @@ def main():
     args = parser.parse_args()
     dir_path = args.dir_path
     filename = args.filename
-    url_img = get_comics()['img']
+    url_img = get_random_comic_stat()['img']
     response_img = requests.get(url_img)
     response_img.raise_for_status()
     with open(os.path.join(dir_path,filename), 'wb') as file:
