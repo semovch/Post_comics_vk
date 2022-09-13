@@ -17,21 +17,21 @@ def get_random_comic_stat():
     return response.json()
 
 
-def wall_upload(vk_token):    
+def wall_upload(vk_token, vk_group_id):    
     params_wall_upload = {
         'access_token': vk_token,
-        'group_id': 215862413,
+        'group_id': vk_group_id,
         'v': '5.131'
             }
     wall_upload_response = requests.get('https://api.vk.com/method/photos.getWallUploadServer', params=params_wall_upload)
     return(wall_upload_response.json())
 
 
-def wall_save(vk_token,filename,dir_path):
+def wall_save(vk_token,filename,dir_path, vk_group_id):
     with open(os.path.join(dir_path, filename), 'rb') as file:
         url = wall_upload(vk_token)['response']['upload_url']
         server_params = {
-            'group_id': 215862413
+            'group_id': vk_group_id
                 }
         files = {
             'photo': file
@@ -40,7 +40,7 @@ def wall_save(vk_token,filename,dir_path):
         server_response.raise_for_status()    
     wall_save_params = {
         'photo': server_response.json()['photo'],
-        'group_id': 215862413,
+        'group_id': vk_group_id,
         'access_token': vk_token,
         'server': server_response.json()['server'],
         'hash': server_response.json()['hash'],
@@ -51,12 +51,12 @@ def wall_save(vk_token,filename,dir_path):
     return wall_save_response.json()
 
 
-def wall_post(vk_token,filename,dir_path):
+def wall_post(vk_token,filename,dir_path, vk_group_id):
     own_id = wall_save(vk_token,filename,dir_path)['response'][0]['owner_id']
     media_id = wall_save(vk_token,filename,dir_path)['response'][0]['id']
 
     wall_post_params = {
-        'owner_id': -215862413,
+        'owner_id': -vk_group_id,
         'from_group': 1,
         'message': get_comics()['alt'],
         'access_token': vk_token,
@@ -71,6 +71,7 @@ def wall_post(vk_token,filename,dir_path):
 def main():
     load_dotenv('.env')
     vk_token = os.environ['VK_TOKEN']
+    vk_group_id = int(os.environ['VK_GROUP_ID'])
     parser = argparse.ArgumentParser(
         description='публикация комикса'
     )
