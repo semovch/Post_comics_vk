@@ -37,13 +37,14 @@ def wall_save(vk_token,filename,dir_path, vk_group_id):
             'photo': file
                 }
         server_response = requests.post(url, files=files, params=server_params)
-        server_response.raise_for_status()    
+        server_response.raise_for_status()
+        server_response_stat = server_response.json()
     wall_save_params = {
-        'photo': server_response.json()['photo'],
+        'photo': server_response_stat['photo'],
         'group_id': vk_group_id,
         'access_token': vk_token,
-        'server': server_response.json()['server'],
-        'hash': server_response.json()['hash'],
+        'server': server_response_stat['server'],
+        'hash': server_response_stat['hash'],
         'v': '5.131'
             }
     wall_save_response = requests.post('https://api.vk.com/method/photos.saveWallPhoto', params=wall_save_params)
