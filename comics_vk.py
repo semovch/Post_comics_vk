@@ -85,7 +85,7 @@ def main():
     with open(os.path.join(dir_path,filename), 'wb') as file:
         file.write(response_img.content)
     print(wall_post(vk_token,filename,dir_path))
-    os.remove(dir_path +'/'+ filename)
+    os.remove(f'{dir_path}/{filename}')
 
 
 if __name__ == '__main__':
