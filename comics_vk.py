@@ -28,18 +28,7 @@ def upload_to_wall(vk_token, vk_group_id):
     return(upload_to_wall_response.json())
 
 
-def save_to_wall(vk_token,filename,dir_path,vk_group_id):
-    url = upload_to_wall(vk_token,vk_group_id)['response']['upload_url']
-    with open(os.path.join(dir_path, filename), 'rb') as file:
-        server_params = {
-            'group_id': vk_group_id
-                }
-        files = {
-            'photo': file
-                }
-    server_response = requests.post(url, files=files, params=server_params)
-    server_response.raise_for_status()
-    decoded_server_response = server_response.json()
+def save_to_wall(vk_token,filename,dir_path,vk_group_id,decoded_server_response):
     save_to_wall_params = {
         'photo': decoded_server_response['photo'],
         'group_id': vk_group_id,
@@ -86,6 +75,17 @@ def main():
     img_url = get_random_comic_stat()['img']
     response_img = requests.get(img_url)
     response_img.raise_for_status()
+    upload_url = upload_to_wall(vk_token,vk_group_id)['response']['upload_url']
+    with open(os.path.join(dir_path, filename), 'rb') as file:
+        server_params = {
+            'group_id': vk_group_id
+                }
+        files = {
+            'photo': file
+                }
+    server_response = requests.post(upload_url, files=files, params=server_params)
+    server_response.raise_for_status()
+    decoded_server_response = server_response.json()
     with open(os.path.join(dir_path,filename), 'wb') as file:
         file.write(response_img.content)
     print(post_to_wall(vk_token,filename,dir_path,vk_group_id))
