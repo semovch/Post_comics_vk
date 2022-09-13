@@ -25,7 +25,7 @@ def upload_to_wall(vk_token, vk_group_id):
             }
     upload_to_wall_response = requests.get('https://api.vk.com/method/photos.getWallUploadServer', params=params_wall_upload)
     upload_to_wall_response.raise_for_status()
-    return(upload_to_wall_response.json())
+    return upload_to_wall_response.json()
 
 
 def save_to_wall(vk_token,filename,dir_path,vk_group_id,decoded_server_response):
@@ -57,7 +57,7 @@ def post_to_wall(vk_token,filename,dir_path,vk_group_id):
 
     post_to_wall_response = requests.post('https://api.vk.com/method/wall.post', params=post_to_wall_params)
     post_to_wall_response.raise_for_status()
-    return(post_to_wall_response.json())
+    return post_to_wall_response.json()
 
 
 def main():
