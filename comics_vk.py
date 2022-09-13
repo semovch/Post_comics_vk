@@ -24,6 +24,7 @@ def wall_upload(vk_token, vk_group_id):
         'v': '5.131'
             }
     wall_upload_response = requests.get('https://api.vk.com/method/photos.getWallUploadServer', params=params_wall_upload)
+    wall_upload_response.raise_for_status()
     return(wall_upload_response.json())
 
 
@@ -38,17 +39,17 @@ def wall_save(vk_token,filename,dir_path, vk_group_id):
                 }
     server_response = requests.post(url, files=files, params=server_params)
     server_response.raise_for_status()
-    server_response_stat = server_response.json()
+    decoded_server_response = server_response.json()
     wall_save_params = {
-        'photo': server_response_stat['photo'],
+        'photo': decode_server_response['photo'],
         'group_id': vk_group_id,
         'access_token': vk_token,
-        'server': server_response_stat['server'],
-        'hash': server_response_stat['hash'],
+        'server': decoded_server_response['server'],
+        'hash': decoded_server_response['hash'],
         'v': '5.131'
             }
     wall_save_response = requests.post('https://api.vk.com/method/photos.saveWallPhoto', params=wall_save_params)
-    wall_save_response.raise_for_status
+    wall_save_response.raise_for_status()
     return wall_save_response.json()
 
 
@@ -66,6 +67,7 @@ def wall_post(vk_token,filename,dir_path, vk_group_id):
             }
 
     wall_post_response = requests.post('https://api.vk.com/method/wall.post', params=wall_post_params)
+    wall_post_response.raise_for_status()
     return(wall_post_response.json())
 
 
