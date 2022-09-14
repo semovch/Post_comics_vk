@@ -3,6 +3,7 @@ import argparse
 
 import requests
 import random
+import urllib.parse
 
 from dotenv import load_dotenv
 
@@ -14,7 +15,8 @@ def get_random_comic_stat():
     random_url = f'https://xkcd.com/{random_num}/info.0.json'
     response = requests.get(random_url)
     response.raise_for_status()
-    return response.json()
+    decoded_response = response.json()
+    return decoded_response['img'], decoded_response['alt']
 
 
 def upload_to_wall(vk_token, vk_group_id):    
@@ -25,10 +27,10 @@ def upload_to_wall(vk_token, vk_group_id):
             }
     upload_to_wall_response = requests.get('https://api.vk.com/method/photos.getWallUploadServer', params=params_wall_upload)
     upload_to_wall_response.raise_for_status()
-    return upload_to_wall_response.json()
+    return upload_to_wall_response.json()['response']['upload_url']
 
 
-def save_to_wall(vk_token,filename,dir_path,vk_group_id,decoded_server_response):
+def save_to_wall(vk_token,filename,vk_group_id,decoded_server_response):
     save_to_wall_params = {
         'photo': decoded_server_response['photo'],
         'group_id': vk_group_id,
@@ -42,8 +44,8 @@ def save_to_wall(vk_token,filename,dir_path,vk_group_id,decoded_server_response)
     return save_to_wall_response.json()
 
 
-def post_to_wall(vk_token,filename,dir_path,vk_group_id,comment,decoded_server_response):
-    save_to_wall_stat = save_to_wall(vk_token,filename,dir_path,vk_group_id,decoded_server_response)['response'][0]
+def post_to_wall(vk_token,filename,vk_group_id,comment,decoded_server_response):
+    save_to_wall_stat = save_to_wall(vk_token,filename,vk_group_id,decoded_server_response)['response'][0]
     own_id = save_to_wall_stat['owner_id']
     media_id = save_to_wall_stat['id']
 
@@ -63,26 +65,16 @@ def post_to_wall(vk_token,filename,dir_path,vk_group_id,comment,decoded_server_r
 
 def main():
     load_dotenv('.env')
-    decoded_random_comic_stat = get_random_comic_stat()
     vk_token = os.environ['VK_TOKEN']
     vk_group_id = int(os.environ['VK_GROUP_ID'])
-    parser = argparse.ArgumentParser(
-        description='публикация комикса'
-    )
-    parser.add_argument('dir_path', help='введите путь к нужной директории')
-    parser.add_argument('filename', help='введите название комикса')
-    args = parser.parse_args()
-    dir_path = args.dir_path
-    filename = args.filename
-    img_url = decoded_random_comic_stat['img']
-    comment = decoded_random_comic_stat['alt']
+    img_url, comment = get_random_comic_stat()
+    filename = os.path.basename(img_url)
     response_img = requests.get(img_url)
     response_img.raise_for_status()
-    upload_url = upload_to_wall(vk_token,vk_group_id)['response']['upload_url']
-    
-    with open(os.path.join(dir_path,filename), 'wb') as file:
+    upload_url = upload_to_wall(vk_token,vk_group_id)
+    with open(os.path.join(filename), 'wb') as file:
         file.write(response_img.content)
-    with open(os.path.join(dir_path, filename), 'rb') as file:
+    with open(os.path.join(filename), 'rb') as file:
         server_params = {
             'group_id': vk_group_id
                 }
@@ -90,11 +82,12 @@ def main():
             'photo': file
                 }
         server_response = requests.post(upload_url, files=files, params=server_params)
-    os.remove(f'{dir_path}/{filename}')
+    os.remove(f'{filename}')
     server_response.raise_for_status()
     decoded_server_response = server_response.json()
-    print(post_to_wall(vk_token,filename,dir_path,vk_group_id,comment,decoded_server_response))
+    print(post_to_wall(vk_token,filename,vk_group_id,comment,decoded_server_response))
 
 
 if __name__ == '__main__':
     main()
+
