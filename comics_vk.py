@@ -82,7 +82,7 @@ def main():
             'photo': file
                 }
         server_response = requests.post(upload_url, files=files, params=server_params)
-    os.remove(f'{filename}')
+    os.remove(filename)
     server_response.raise_for_status()
     decoded_server_response = server_response.json()
     print(post_to_wall(vk_token,filename,vk_group_id,comment,decoded_server_response))
