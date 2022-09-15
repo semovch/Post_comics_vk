@@ -42,22 +42,24 @@ def upload_comic(vk_token, vk_group_id, filename):
     finally:
         os.remove(filename)
     server_response.raise_for_status()
-    return server_response.json()
+    decoded_server_response = server_response.json()
+    return decoded_server_response['photo'], decoded_server_response['server'], decoded_server_response['hash']
 
 
-def save_comic(vk_token, filename, vk_group_id, decoded_server_response):
+def save_comic(vk_token, filename, vk_group_id, photo, server, server_hash):
     save_to_wall_params = {
-        'photo': decoded_server_response['photo'],
+        'photo': photo,
         'group_id': vk_group_id,
         'access_token': vk_token,
-        'server': decoded_server_response['server'],
-        'hash': decoded_server_response['hash'],
+        'server': server,
+        'hash': server_hash,
         'v': '5.131'
     }
     save_comic_response = requests.post('https://api.vk.com/method/photos.saveWallPhoto',
                                         params=save_to_wall_params)
     save_comic_response.raise_for_status()
-    return save_comic_response.json()
+    save_comic_stat = save_comic_response.json()
+    return save_comic_stat['response'][0]['owner_id'], save_comic_stat['response'][0]['id']
 
 
 def post_comic(vk_token, filename, vk_group_id, comment, own_id, media_id):
@@ -86,13 +88,8 @@ def main():
     response_img.raise_for_status()
     with open(os.path.join(filename), 'wb') as file:
         file.write(response_img.content) 
-    decoded_server_response = upload_comic(vk_token, vk_group_id, filename)
-    photo = decoded_server_response['photo']
-    server = decoded_server_response['server']
-    hash = decoded_server_response['hash']
-    save_comic_stat = save_comic(vk_token, filename, vk_group_id, decoded_server_response)['response'][0]
-    own_id = save_comic_stat['owner_id']
-    media_id = save_comic_stat['id']
+    photo, server, server_hash = upload_comic(vk_token, vk_group_id, filename)
+    own_id, media_id = save_comic(vk_token, filename, vk_group_id, photo, server, server_hash)
     print(post_comic(vk_token, filename, vk_group_id, comment, own_id, media_id))
 
 
