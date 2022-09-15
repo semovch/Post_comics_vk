@@ -19,18 +19,34 @@ def get_random_comic_stat():
     return decoded_response['img'], decoded_response['alt']
 
 
-def upload_to_wall(vk_token, vk_group_id):    
+def upload_comic(vk_token, vk_group_id, filename):    
     params_wall_upload = {
         'access_token': vk_token,
         'group_id': vk_group_id,
         'v': '5.131'
-            }
-    upload_to_wall_response = requests.get('https://api.vk.com/method/photos.getWallUploadServer', params=params_wall_upload)
-    upload_to_wall_response.raise_for_status()
-    return upload_to_wall_response.json()['response']['upload_url']
+    }
+    upload_comic_response = requests.get('https://api.vk.com/method/photos.getWallUploadServer',
+                                         params=params_wall_upload)
+    upload_comic_response.raise_for_status()
+    upload_url = upload_comic_response.json()['response']['upload_url']
+    with open(os.path.join(filename), 'rb') as file:
+        server_params = {
+            'group_id': vk_group_id
+        }
+        files = {
+            'photo': file
+        }
+        server_response = requests.post(upload_url,
+                                        files=files, params=server_params)
+    try:
+        pass
+    finally:
+        os.remove(filename)
+    server_response.raise_for_status()
+    return server_response.json()
 
 
-def save_to_wall(vk_token,filename,vk_group_id,decoded_server_response):
+def save_comic(vk_token, filename, vk_group_id, decoded_server_response):
     save_to_wall_params = {
         'photo': decoded_server_response['photo'],
         'group_id': vk_group_id,
@@ -38,17 +54,14 @@ def save_to_wall(vk_token,filename,vk_group_id,decoded_server_response):
         'server': decoded_server_response['server'],
         'hash': decoded_server_response['hash'],
         'v': '5.131'
-            }
-    save_to_wall_response = requests.post('https://api.vk.com/method/photos.saveWallPhoto', params=save_to_wall_params)
-    save_to_wall_response.raise_for_status()
-    return save_to_wall_response.json()
+    }
+    save_comic_response = requests.post('https://api.vk.com/method/photos.saveWallPhoto',
+                                        params=save_to_wall_params)
+    save_comic_response.raise_for_status()
+    return save_comic_response.json()
 
 
-def post_to_wall(vk_token,filename,vk_group_id,comment,decoded_server_response):
-    save_to_wall_stat = save_to_wall(vk_token,filename,vk_group_id,decoded_server_response)['response'][0]
-    own_id = save_to_wall_stat['owner_id']
-    media_id = save_to_wall_stat['id']
-
+def post_comic(vk_token, filename, vk_group_id, comment, own_id, media_id):
     post_to_wall_params = {
         'owner_id': -vk_group_id,
         'from_group': 1,
@@ -56,11 +69,12 @@ def post_to_wall(vk_token,filename,vk_group_id,comment,decoded_server_response):
         'access_token': vk_token,
         'v': '5.131',
         'attachments': f'photo{own_id}_{media_id}'
-            }
+    }
 
-    post_to_wall_response = requests.post('https://api.vk.com/method/wall.post', params=post_to_wall_params)
-    post_to_wall_response.raise_for_status()
-    return post_to_wall_response.json()
+    post_comic_response = requests.post('https://api.vk.com/method/wall.post',
+                                        params=post_to_wall_params)
+    post_comic_response.raise_for_status()
+    return post_comic_response.json()
 
 
 def main():
@@ -71,23 +85,17 @@ def main():
     filename = os.path.basename(img_url)
     response_img = requests.get(img_url)
     response_img.raise_for_status()
-    upload_url = upload_to_wall(vk_token,vk_group_id)
     with open(os.path.join(filename), 'wb') as file:
-        file.write(response_img.content)
-    with open(os.path.join(filename), 'rb') as file:
-        server_params = {
-            'group_id': vk_group_id
-                }
-        files = {
-            'photo': file
-                }
-        server_response = requests.post(upload_url, files=files, params=server_params)
-    os.remove(filename)
-    server_response.raise_for_status()
-    decoded_server_response = server_response.json()
-    print(post_to_wall(vk_token,filename,vk_group_id,comment,decoded_server_response))
+        file.write(response_img.content) 
+    decoded_server_response = upload_comic(vk_token, vk_group_id, filename)
+    photo = decoded_server_response['photo']
+    server = decoded_server_response['server']
+    hash = decoded_server_response['hash']
+    save_comic_stat = save_comic(vk_token, filename, vk_group_id, decoded_server_response)['response'][0]
+    own_id = save_comic_stat['owner_id']
+    media_id = save_comic_stat['id']
+    print(post_comic(vk_token, filename, vk_group_id, comment, own_id, media_id))
 
 
 if __name__ == '__main__':
     main()
-
